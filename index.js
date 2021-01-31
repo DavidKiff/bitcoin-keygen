@@ -1,13 +1,28 @@
 const fs = require("fs");
 const path = require("path");
 const request = require("./request");
+const axios = require("axios");
+const bitcoin = require("bitcoinjs-lib");
 
-async function getNewKeyPairs() {
-  const { address, publicKey, privateKey } = await request.generateKeyPairs();
-  return { address, publicKey, privateKey };
+function getNewKeyPairs() {
+  const keyPair = bitcoin.ECPair.makeRandom();
+  const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey });
+  const publicKey = keyPair.publicKey.toString("hex");
+  const privateKey = keyPair.toWIF();
+  return { address, privateKey, publicKey };
 }
 
-const MB = 1024 * 1024;
+async function getAddressInfo(address) {
+  const url = `https://blockchain.info/address/${address}?format=json`;
+  try {
+    return await axios.get(url);
+  } catch (e) {
+    throw new Error(e);
+  }
+}
+
+const megaKeys = 1024 * 1024;
+
 let keys = [];
 
 function saveKeys() {
@@ -29,15 +44,12 @@ process.on("SIGINT", function () {
 
 (async function () {
   while (true) {
-    const timestamp = Date.now();
-    let key = await getNewKeyPairs();
-    const info = await request.getAddressInfo(key.address);
+    let key = getNewKeyPairs();
+    const info = await getAddressInfo(key.address);
     key.info = info.data;
-    key.timestamp = timestamp;
-    const empty = key.info.n_tx === 0;
-    const unspent = !empty && key.info.final_balance > 0;
-    const spent = !empty && key.info.final_balance === 0;
-    if (unspent) {
+    key.timestamp = Date.now();
+    const hasUnspent = key.info.final_balance > 0;
+    if (hasUnspent) {
       console.log(
         "Address",
         key.address,
@@ -46,8 +58,7 @@ process.on("SIGINT", function () {
       );
     }
     keys.push(key);
-
-    if (keys.length > MB) {
+    if (keys.length > megaKeys) {
       saveKeys();
       keys = [];
     }
