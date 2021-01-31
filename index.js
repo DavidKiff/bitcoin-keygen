@@ -8,12 +8,16 @@ async function getNewKeyPairs() {
 }
 
 (async function () {
+  const dataFolder = path.join(__dirname, "data");
+  if (!fs.existsSync(dataFolder)) {
+    fs.mkdirSync(dataFolder);
+  }
   while (true) {
     const timestamp = Date.now();
     const hour = Math.floor(timestamp / 1000 / 60 / 60);
-    const folderPath = path.join(__dirname, "data", hour.toString());
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath);
+    const hourFolder = path.join(__dirname, "data", hour.toString());
+    if (!fs.existsSync(hourFolder)) {
+      fs.mkdirSync(hourFolder);
     }
     let key = await getNewKeyPairs();
     const info = await request.getAddressInfo(key.address);
@@ -22,7 +26,7 @@ async function getNewKeyPairs() {
     const empty = key.info.n_tx === 0;
     const unspent = !empty && key.info.final_balance > 0;
     const spent = !empty && key.info.final_balance === 0;
-    if (hasBalance) {
+    if (unspent) {
       console.log(
         "Address",
         key.address,
@@ -32,7 +36,7 @@ async function getNewKeyPairs() {
     }
     fs.writeFileSync(
       path.join(
-        folderPath,
+        hourFolder,
         key.address + (unspent ? ".unspent" : spent ? ".spent" : ".empty")
       ),
       JSON.stringify(key),
