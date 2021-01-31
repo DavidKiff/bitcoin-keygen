@@ -7,18 +7,29 @@ async function getNewKeyPairs() {
   return { address, publicKey, privateKey };
 }
 
-(async function () {
+const MB = 1024 * 1024;
+let keys = [];
+
+function saveKeys() {
   const dataFolder = path.join(__dirname, "data");
   if (!fs.existsSync(dataFolder)) {
     fs.mkdirSync(dataFolder);
   }
+  fs.writeFileSync(
+    path.join(dataFolder, Date.now().toString() + ".json"),
+    JSON.stringify(keys),
+    { encoding: "utf8" }
+  );
+}
+
+process.on("SIGINT", function () {
+  saveKeys();
+  process.exit();
+});
+
+(async function () {
   while (true) {
     const timestamp = Date.now();
-    const hour = Math.floor(timestamp / 1000 / 60 / 60);
-    const hourFolder = path.join(__dirname, "data", hour.toString());
-    if (!fs.existsSync(hourFolder)) {
-      fs.mkdirSync(hourFolder);
-    }
     let key = await getNewKeyPairs();
     const info = await request.getAddressInfo(key.address);
     key.info = info.data;
@@ -34,13 +45,11 @@ async function getNewKeyPairs() {
         key.info.final_balance
       );
     }
-    fs.writeFileSync(
-      path.join(
-        hourFolder,
-        key.address + (unspent ? ".unspent" : spent ? ".spent" : ".empty")
-      ),
-      JSON.stringify(key),
-      { encoding: "utf8" }
-    );
+    keys.push(key);
+
+    if (keys.length > MB) {
+      saveKeys();
+      keys = [];
+    }
   }
 })();
