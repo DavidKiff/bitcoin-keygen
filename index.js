@@ -17,7 +17,7 @@ function saveKeys() {
   }
   fs.writeFileSync(
     path.join(dataFolder, Date.now().toString() + ".json"),
-    JSON.stringify(keys),
+    JSON.stringify(keys, null, 2),
     { encoding: "utf8" }
   );
 }
