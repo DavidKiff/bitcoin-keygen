@@ -1,0 +1,20 @@
+{
+  "name": "bitcoin-keygen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "bitcoinjs-lib": "^5.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.19.0",
+    "prettier": "^2.2.1"
+  }
+}
