@@ -17,7 +17,7 @@ async function getAddressInfo(address) {
   try {
     return await axios.get(url);
   } catch (e) {
-     console.error(e);
+    console.error(e);
   }
 }
 
@@ -51,28 +51,30 @@ process.on("SIGHUP", function () {
   while (true) {
     let key = getNewKeyPairs();
     const info = await getAddressInfo(key.address);
-    key.info = info.data;
-    key.timestamp = Date.now();
-    const empty = key.info.n_tx === 0;
-    const spent = key.info.final_balance === 0;
-    if (!empty && !spent) {
-      console.log(
-        key.address,
-        chalk.green("has balance " + key.info.final_balance)
-      );
-    }
-    // console.log(
-    //   key.address,
-    //   empty
-    //     ? chalk.red("is empty")
-    //     : spent
-    //     ? chalk.yellow("is spent")
-    //     : chalk.green("has balance " + key.info.final_balance)
-    // );
-    keys.push(key);
-    if (keys.length > keysPerFile) {
-      saveKeys();
-      keys = [];
+    if (info) {
+      key.info = info.data;
+      key.timestamp = Date.now();
+      const empty = key.info.n_tx === 0;
+      const spent = key.info.final_balance === 0;
+      if (!empty) {
+        console.log(
+          key.address,
+          chalk.green("has balance " + key.info.final_balance)
+        );
+      }
+      // console.log(
+      //   key.address,
+      //   empty
+      //     ? chalk.red("is empty")
+      //     : spent
+      //     ? chalk.yellow("is spent")
+      //     : chalk.green("has balance " + key.info.final_balance)
+      // );
+      keys.push(key);
+      if (keys.length > keysPerFile) {
+        saveKeys();
+        keys = [];
+      }
     }
   }
 })();
