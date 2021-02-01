@@ -1,6 +1,6 @@
 const fs = require("fs");
+const chalk = require("chalk");
 const path = require("path");
-const request = require("./request");
 const axios = require("axios");
 const bitcoin = require("bitcoinjs-lib");
 
@@ -17,11 +17,11 @@ async function getAddressInfo(address) {
   try {
     return await axios.get(url);
   } catch (e) {
-    throw new Error(e);
+     console.error(e);
   }
 }
 
-const megaKeys = 1024 * 1024;
+const keysPerFile = 10000;
 
 let keys = [];
 
@@ -42,23 +42,35 @@ process.on("SIGINT", function () {
   process.exit();
 });
 
+process.on("SIGHUP", function () {
+  saveKeys();
+  process.exit();
+});
+
 (async function () {
   while (true) {
     let key = getNewKeyPairs();
     const info = await getAddressInfo(key.address);
     key.info = info.data;
     key.timestamp = Date.now();
-    const hasUnspent = key.info.final_balance > 0;
-    if (hasUnspent) {
+    const empty = key.info.n_tx === 0;
+    const spent = key.info.final_balance === 0;
+    if (!empty && !spent) {
       console.log(
-        "Address",
         key.address,
-        "has balance",
-        key.info.final_balance
+        chalk.green("has balance " + key.info.final_balance)
       );
     }
+    // console.log(
+    //   key.address,
+    //   empty
+    //     ? chalk.red("is empty")
+    //     : spent
+    //     ? chalk.yellow("is spent")
+    //     : chalk.green("has balance " + key.info.final_balance)
+    // );
     keys.push(key);
-    if (keys.length > megaKeys) {
+    if (keys.length > keysPerFile) {
       saveKeys();
       keys = [];
     }

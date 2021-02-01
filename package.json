@@ -11,7 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
-    "bitcoinjs-lib": "^5.2.0"
+    "bitcoinjs-lib": "^5.2.0",
+    "chalk": "^4.1.0"
   },
   "devDependencies": {
     "eslint": "^7.19.0",
