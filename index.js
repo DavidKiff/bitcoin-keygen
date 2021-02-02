@@ -23,7 +23,7 @@ async function getAddressInfo(address) {
   }
 }
 
-const keysPerFile = 10000;
+const keysPerFile = 50000;
 
 let keys = [];
 
