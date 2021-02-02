@@ -3,8 +3,10 @@ const chalk = require("chalk");
 const path = require("path");
 const axios = require("axios");
 const bitcoin = require("bitcoinjs-lib");
+const { pseudoRandomBytes } = require("crypto");
 
 function getNewKeyPairs() {
+  // const keyPair = bitcoin.ECPair.makeRandom({ rng: pseudoRandomBytes });
   const keyPair = bitcoin.ECPair.makeRandom();
   const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey });
   const publicKey = keyPair.publicKey.toString("hex");
@@ -17,7 +19,7 @@ async function getAddressInfo(address) {
   try {
     return await axios.get(url);
   } catch (e) {
-    console.error(e);
+    console.log(chalk.red(`Failed to fetch ${url}`));
   }
 }
 
