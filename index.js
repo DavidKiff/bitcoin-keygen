@@ -4,23 +4,16 @@ const path = require("path");
 const axios = require("axios");
 const bitcoin = require("bitcoinjs-lib");
 const { pseudoRandomBytes } = require("crypto");
+const getAddressInfo = require("./getAddressInfo");
 
 function getNewKeyPairs() {
   // const keyPair = bitcoin.ECPair.makeRandom({ rng: pseudoRandomBytes });
   const keyPair = bitcoin.ECPair.makeRandom();
   const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey });
+  // const { address } = bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey });
   const publicKey = keyPair.publicKey.toString("hex");
   const privateKey = keyPair.toWIF();
   return { address, privateKey, publicKey };
-}
-
-async function getAddressInfo(address) {
-  const url = `https://blockchain.info/address/${address}?format=json`;
-  try {
-    return await axios.get(url);
-  } catch (e) {
-    console.log(chalk.red(`Failed to fetch ${url}`));
-  }
 }
 
 const keysPerFile = 50000;
@@ -58,20 +51,20 @@ process.on("SIGHUP", function () {
       key.timestamp = Date.now();
       const empty = key.info.n_tx === 0;
       const spent = key.info.final_balance === 0;
-      if (!empty) {
-        console.log(
-          key.address,
-          chalk.green("has balance " + key.info.final_balance)
-        );
-      }
-      // console.log(
-      //   key.address,
-      //   empty
-      //     ? chalk.red("is empty")
-      //     : spent
-      //     ? chalk.yellow("is spent")
-      //     : chalk.green("has balance " + key.info.final_balance)
-      // );
+      // if (!empty) {
+      //   console.log(
+      //     key.address,
+      //     chalk.green("has balance " + key.info.final_balance)
+      //   );
+      // }
+      console.log(
+        key.address,
+        empty
+          ? chalk.red("is empty")
+          : spent
+          ? chalk.yellow("is spent")
+          : chalk.green("has balance " + key.info.final_balance)
+      );
       keys.push(key);
       if (keys.length > keysPerFile) {
         saveKeys();

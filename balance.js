@@ -1,18 +1,22 @@
-const fs = require("fs");
-const path = require("path");
+const chalk = require("chalk");
+const keys = require("./3000key.json");
+const getAddressInfo = require("./getAddressInfo");
 
-const dataFolder = path.join(__dirname, "data");
-
-function loadKeys() {
-  fs.readdirSync(dataFolder).forEach((file) => {
-    console.log(file);
-    if (file.endsWith(".json")) {
-      const keys = JSON.parse(
-        fs.readFileSync(path.join(dataFolder, file), { encoding: "utf8" })
+(async function () {
+  for (const key of keys) {
+    const address = key.a;
+    const info = await getAddressInfo(address);
+    if (info) {
+      const empty = info.data.n_tx === 0;
+      const spent = info.data.final_balance === 0;
+      console.log(
+        address,
+        empty
+          ? chalk.red("is empty")
+          : spent
+          ? chalk.yellow("is spent")
+          : chalk.green("has balance " + info.data.final_balance)
       );
-      keys.filter((k) => k.info.n_tx > 0).map(console.log);
     }
-  });
-}
-
-loadKeys();
+  }
+})();
